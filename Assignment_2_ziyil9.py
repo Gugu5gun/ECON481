@@ -71,6 +71,8 @@ def neg_log_likehood(initialGuess1:np.array, X:np.array, y:np.array) -> int:
     # Calculate the 
 
     likelihood_fun = -np.sum(res**2/2) - 500*np.log(2*np.pi*1)
+    # Which is the MLE coefficient
+
     return - likelihood_fun
     
 result = sp.optimize.minimize(neg_log_likehood, initialGuess1, args = (X, y), method = 'Nelder-Mead')
@@ -83,10 +85,30 @@ def estimate_mle(y: np.array, X: np.array) -> np.array:
     return result.reshape(-1,1)
 
 # estimate_mle(y,X)
+# Credicts to my friend:Francis (Discord Id) 
 
-# Credicts to my friend, : 
+
+initialGuess1 = [1,1,1,1]
 
 def estimate_ols(y: np.array, X: np.array) -> np.array:
 
     return None
 
+def get_res(initialGuess1:np.array, X:np.array, y:np.array) -> int:
+    
+    b0,b1,b2,b3 = initialGuess1
+    # Assigning the numbers in initialGuess into the betas
+
+    res = np.zeros((1000,1))
+    y_pred = np.zeros((1000,1))
+    # Creating the Residual and the Predicted Value of the Y
+
+    y_pred = b0 + b1 * X[0] + b2*X[1] + b3*X[2]
+    res = y - y_pred
+    # Calculate the residual
+
+    res = res**2
+
+    return np.sum(res)
+    
+result = sp.optimize.minimize(get_res, initialGuess1, args = (X, y))
