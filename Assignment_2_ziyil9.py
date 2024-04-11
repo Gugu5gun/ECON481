@@ -24,9 +24,8 @@ def simulate_data(seed: int) -> tuple:
     x_3 = np.random.normal(0,np.sqrt(2),(1000,1))
     e = np.random.normal(0,1,(1000,1))
     # Which means that, draw 1000 samples from a normal distribution with mean of 0 and SD of 2
-    # y = np.zeros((1000,1))
 
-    Y = 5 + 3*x_1 + 2*x_2 + 3*x_3 + e
+    Y = 5 + 3*x_1 + 2*x_2 + 6*x_3 + e
     # Creating the Y array
 
     X = np.array([x_1,x_2,x_3])
@@ -37,27 +36,57 @@ def simulate_data(seed: int) -> tuple:
 
 # simulate_data(481)
 
-# Start from here, for test only
-
-# X_1 = np.random.normal(0,np.sqrt(2),(3,1))
-# X_2 = np.random.normal(0,np.sqrt(2),(3,1))
-# e = np.random.normal(0,1,(3,1))
-
-# X = np.array([X_1,X_2])
-
-# Y = X_1 + X_2 + e + 2
-
-# result_tuple = (Y,X)
-
-# Ending part of testing...
+# Maximize Likelyhood Function
+# 
 
 # Write a function that estimates the MLE parameters 
 # for data simulated as above, where the assumed model is
 # Yi = B0 + B1x1i + B2x1i + B3x1i + e
 
+np.random.seed(481)
+
+x_1 = np.random.normal(0,np.sqrt(2),(1000,1))
+x_2 = np.random.normal(0,np.sqrt(2),(1000,1))
+x_3 = np.random.normal(0,np.sqrt(2),(1000,1))
+e = np.random.normal(0,1,(1000,1))
+X = np.array([x_1,x_2,x_3])
+
+y = 5 + 3*x_1 + 2*x_2 + 6*x_3 + e
+# Forming the X and y array
+
+initialGuess1 = [1,1,1,1]
+# Making an initial guess for the coefficients
+
+def neg_log_likehood(initialGuess1:np.array, X:np.array, y:np.array) -> int:
+    
+    b0,b1,b2,b3 = initialGuess1
+    # Assigning the numbers in initialGuess into the betas
+
+    res = np.zeros((1000,1))
+    y_pred = np.zeros((1000,1))
+    # Creating the Residual and the Predicted Value of the Y
+
+    y_pred = b0 + b1 * X[0] + b2*X[1] + b3*X[2]
+    res = y - y_pred
+    # Calculate the 
+
+    likelihood_fun = -np.sum(res**2/2) - 500*np.log(2*np.pi*1)
+    return - likelihood_fun
+    
+result = sp.optimize.minimize(neg_log_likehood, initialGuess1, args = (X, y), method = 'Nelder-Mead')
+
+result.x
+# To get the coefficient in the result. 
+
 def estimate_mle(y: np.array, X: np.array) -> np.array:
-    """
-    Some docstrings.
-    """
+    result_mle = np.array(result.x)
+    return result.reshape(-1,1)
+
+# estimate_mle(y,X)
+
+# Credicts to my friend, : 
+
+def estimate_ols(y: np.array, X: np.array) -> np.array:
 
     return None
+
