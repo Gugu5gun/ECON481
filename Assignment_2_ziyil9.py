@@ -4,7 +4,7 @@
 
 def github() -> str:
 
-    return "https://github.com/Gugu5gun/ECON481/Assignment_2_ziyil9.py"
+    return "https://github.com/Gugu5gun/ECON481/blob/main/Assignment_2_ziyil9.py"
 
 import numpy as np
 import scipy as sp
@@ -32,18 +32,20 @@ def simulate_data(seed: int) -> tuple:
     # Changing this three arrays into a 3D array. 
 
     result_tuple = (Y,X)
+    # Combine it into a tuble, a tuble could be combination of different element.
+
     return result_tuple
 
 # simulate_data(481)
 
 # Maximize Likelyhood Function
-# 
 
 # Write a function that estimates the MLE parameters 
 # for data simulated as above, where the assumed model is
 # Yi = B0 + B1x1i + B2x1i + B3x1i + e
 
 np.random.seed(481)
+# Set seed and testing data set.
 
 x_1 = np.random.normal(0,np.sqrt(2),(1000,1))
 x_2 = np.random.normal(0,np.sqrt(2),(1000,1))
@@ -90,11 +92,7 @@ def estimate_mle(y: np.array, X: np.array) -> np.array:
 
 initialGuess1 = [1,1,1,1]
 
-def estimate_ols(y: np.array, X: np.array) -> np.array:
-
-    return None
-
-def get_res(initialGuess1:np.array, X:np.array, y:np.array) -> int:
+def get_sqrres(initialGuess1:np.array, X:np.array, y:np.array) -> int:
     
     b0,b1,b2,b3 = initialGuess1
     # Assigning the numbers in initialGuess into the betas
@@ -108,7 +106,17 @@ def get_res(initialGuess1:np.array, X:np.array, y:np.array) -> int:
     # Calculate the residual
 
     res = res**2
+    # Get the squared residual
 
     return np.sum(res)
     
-result = sp.optimize.minimize(get_res, initialGuess1, args = (X, y))
+result = sp.optimize.minimize(get_sqrres, initialGuess1, args = (X, y))
+# The sp.optimize.minizie work in following way:
+# It takes in a value return by a function, a set of initial guess numbers, and arguments about
+# Which datasets are going to be included in. Afterward, this function will try to fill in the 
+# Initial Guess with different values, until it could get a minimum value in result of get_res.
+
+def estimate_ols(y: np.array, X: np.array) -> np.array:
+    result_coe = np.array(result.x)
+    return result_coe
+
