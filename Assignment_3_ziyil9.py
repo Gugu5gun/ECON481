@@ -5,7 +5,7 @@ import numpy as np
 # Excersize 0
 def github() -> str:
 
-    return "https://github.com/<user>/<repo>/blob/main/<filename.py>"
+    return "https://github.com/Gugu5gun/ECON481/blob/main/Assignment_3_ziyil9.py"
 
 
 # Exercise 1
@@ -17,8 +17,11 @@ def github() -> str:
 def import_yearly_data(years: list) -> pd.DataFrame:
 
     years = list(set(years))
+    # Make sure the years will be unique.
+
     i = range(len(years))
     output_yr = pd.DataFrame()
+    # Set up an empty dataframe to fill in data.
 
     for j in i:
         if years[j] == 2019:
@@ -29,6 +32,7 @@ def import_yearly_data(years: list) -> pd.DataFrame:
             current_yr = pd.read_excel('https://lukashager.netlify.app/econ-481/data/ghgp_data_2021.xlsx',sheet_name= 'Direct Emitters',skiprows = 3)
         else:
             current_yr = pd.read_excel('https://lukashager.netlify.app/econ-481/data/ghgp_data_2022.xlsx',sheet_name= 'Direct Emitters',skiprows = 3)
+        # If else statements, based on the content in the list to choose the xlsx file needed. 
         current_yr['year'] = years[j]
         output_yr = pd.concat([output_yr,current_yr], ignore_index=True)    
     
@@ -39,7 +43,6 @@ def import_yearly_data(years: list) -> pd.DataFrame:
 # and returns a concatenated DataFrame of the corresponding tabs in the parent companies excel sheet1. 
 # Please add a variable year that references the year from which the data is pulled. 
 # Finally, please remove any row that is entirely null values. Do not use any columns as an index.
-
 
 def import_parent_companies(years: list) -> pd.DataFrame:
     
@@ -63,7 +66,7 @@ def import_parent_companies(years: list) -> pd.DataFrame:
 
     return output_yr
 
-test_1 = import_yearly_data([2019])
+# test_1 = import_yearly_data([2019,2020,2021,2022])
 
 # Exercise 3
 # Please write a function called n_null that takes as its arguments a DataFrame and a column name
@@ -83,7 +86,7 @@ def n_null(df: pd.DataFrame, col: str) -> int:
 
 def clean_data(emissions_data: pd.DataFrame, parent_data: pd.DataFrame) -> pd.DataFrame:
 
-    merged_df = pd.merge(parent_data,emissions_data, left_on=['year', 'GHGRP FACILITY ID'], right_on=['year', 'Facility Id'], how='left')
+    merged_df = pd.merge(emissions_data,parent_data, left_on=['year','Facility Id' ], right_on=['year','GHGRP FACILITY ID' ], how='left')
     # Merging the data together based on "year" and "ID". Since the name of ID is different, 
     # we have to use multiple arguments to make the left join. In here, we take GHGRP FACILITY ID equvialent to Facility Id. 
     merged_df = merged_df[['Facility Id', 'year','State','Industry Type (sectors)','Total reported direct emissions','PARENT CO. STATE','PARENT CO. PERCENT OWNERSHIP']]
@@ -93,7 +96,8 @@ def clean_data(emissions_data: pd.DataFrame, parent_data: pd.DataFrame) -> pd.Da
 
     return merged_df
 
-# df_test = clean_data(import_yearly_data([2019]),import_parent_companies([2019]))
+
+# df_test = clean_data(import_yearly_data([2019,2020,2021,2022]),import_parent_companies([2019,2020,2021,2022]))
 # Testing rounds.
 
 # Exercise 5
@@ -108,8 +112,7 @@ def aggregate_emissions(df: pd.DataFrame, group_vars: list) -> pd.DataFrame:
 
     return output_df
 
-# Credicts to my friend, 
+# Credicts to my friend on Exercise 5: Francis (Discord Id)
 
-
-# df_test = aggregate_emissions(clean_data(import_yearly_data([2019]),import_parent_companies([2019])),['year'])
+# df_test = aggregate_emissions(clean_data(import_yearly_data([2019,2020]),import_parent_companies([2019,2020])),['year'])
 # test rounds
