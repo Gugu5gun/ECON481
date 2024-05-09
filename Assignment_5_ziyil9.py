@@ -18,38 +18,6 @@ def github() -> str:
 # as a python file and run it without syntax issues (note that if you try to do actually run the file, 
 # you’ll likely hit some syntax issues since there some that exist by construction in the presentations).
 
-
-
-# This part of codes are my attempts to get the name of lecture slides.
-# I tried multiplt ways to deal with it, but I eventually failed.
-# I cannot have scrap any data on the website using the following codes.
-
-#def get_slide_title():
-    root_url = 'https://lukashager.netlify.app/econ-481/01_intro_to_python#/'
-    url_result = requests.get(root_url)
-    url_bs = BeautifulSoup(url_result.text,"html.parser")
-    slide_titles = url_bs.find_all('li', attrs={'class': 'slide-menu-item-vertical future'})
-
-    for slide_title in slide_titles:
-        title = slide_title.find("slide-menu-item-title")
-        if not title:
-            continue
-        print(title)
-
-# get_slide_title()
-
-
-# root_url = 'https://lukashager.netlify.app/econ-481/01_intro_to_python#/'
-# url_result = requests.get(root_url).text
-# html = etree.HTML(url_result)
-
-# lis = html.xpath("/html/body/div[2]/nav/div[1]/ul/li")
-# for li in lis:
-    title = li.xpath("./span/text()")[0]
-    print(title)
-
-# 
-
 def scrape_code(url: str) -> str:
 
     headers = {'User-agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'}
@@ -73,10 +41,11 @@ def scrape_code(url: str) -> str:
         # Making a loop to find all "Python codes" that matched the pattern
 
         code_in_page = python_code.get_text()
-        if not code_in_page.startswith('%'):
-            output_code = '\n' + code_in_page
+        seperate_codes = code_in_page.split('\n') # This line of code is modified by my friend
+        filtered_codes = '\n'.join([code for code in seperate_codes if not code.startswith('%')]) # So do this line. 
         # Yet, we still need to clean the codes to avoid the codes from another language
         # If it is starting with a %, then igrone it. Else, adding it to the output codes 
+        output_code += filtered_codes + '\n'
     
 
 
