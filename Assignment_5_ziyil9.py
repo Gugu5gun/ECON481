@@ -9,7 +9,7 @@ import time
 
 def github() -> str:
 
-    return "https://github.com/<user>/<repo>/blob/main/<filename.py>"
+    return "https://github.com/Gugu5gun/ECON481/blob/main/Assignment_5_ziyil9.py"
 
 # Exercise 1
 # Please write a function called scrape_code that takes as its argument a lecture’s URL on the course website 
