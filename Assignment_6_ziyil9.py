@@ -2,21 +2,20 @@ import sqlalchemy
 from sqlalchemy import create_engine
 import pandas as pd
 from sqlalchemy.orm import Session
+from sqlalchemy import inspect
 # Import the needed package
 
 path = 'E:/ECON481/auctions.db'
 engine = create_engine(f'sqlite:///{path}')
+
 # 
-#
 # 
 # Please change the path for furthuer verification!!!!
-#
-#
-#
+# 
+# 
 
-from sqlalchemy import inspect
-inspector = inspect(engine)
-inspector.get_table_names()
+review = inspect(engine)
+review.get_table_names()
 # Returns ['bids', 'items'], we are getting correct data.
 
 def github() -> str:
@@ -24,7 +23,7 @@ def github() -> str:
     Some docstrings.
     """
 
-    return "https://github.com/<user>/<repo>/blob/main/<filename.py>"
+    return "https://github.com/Gugu5gun/ECON481/blob/main/Assignment_6_ziyil9.py"
 
 # Please write a function called std that takes no arguments and returns a string containing a SQL query
 # that can be run against the auctions.db database that outputs a table that has two columns: itemId and std,
@@ -53,6 +52,7 @@ q = 'select * from bids'
 # Using the idea of "Unique" to know the content and number of item ID. 
 # For each itemID, make a specific dataframe to calculate mean and std
 
+"""
 def std() -> str:
 
     df_bids = pd.read_sql_query(q, engine)
@@ -61,7 +61,7 @@ def std() -> str:
     freq = df_item_ID.value_counts()
     # use this one to know the frequency of appearence 
     
-    freq_filtered = freq[freq > 2]
+    freq_filtered = freq[freq > 1]
     # for each item. Then we have to remove those items appears less than 2 times. 
 
     freq_filtered = freq_filtered.reset_index()
@@ -90,47 +90,27 @@ def std() -> str:
     # Return the result. 
     return None
 
-query = """
-    SELECT 
-        itemId,SQRT(SUM((bidAmount - avg_bidAmount) * (bidAmount - avg_bidAmount)) / (COUNT(bidAmount) - 1)) as std
-    FROM 
-        (SELECT 
-            itemId, 
-            bidAmount, 
-            AVG(bidAmount) OVER (PARTITION BY itemId) AS avg_bidAmount 
-        FROM 
-            bids) subquery
-    GROUP BY 
-        itemId
-    HAVING 
-        COUNT(bidAmount) > 1;
-    """
+# """
+# This was an attempt of doing so without sql query
+# Which make me finds that, when the freq (which means the number of BidAmount) is greater than 2
+# There will be not zeros in the bid_std
+# But if I set this value as "greater than 1", there will be not zeros in the bid_std
+# The zero in std is caused by an ite with itemId "172998011", which two users had same bid amount.
 
 # To deal with this question, we should first found those datas appears more than 2 times
 # Which we should filter the ones with bidAmount greater than 2. 
 # Ref: https://learnsql.com/blog/partition-by-with-over-sql/
 
-query = """
-    SELECT itemId
-    FROM(
-    SELECT itemId,bidAmount,COUNT(*) as bid_count, AVG(bidAmount) OVER (PARTITION BY itemID) as avg_bid
-    FROM bids
-    GROUP BY itemId
-    HAVING COUNT(bidAmount) > 2
-    )
-
-    """
-
-
-query = """
+def std() -> str:
+    query = """
     SELECT 
         itemId,
-        SQRT(SUM((bidAmount - avg_bidAmount) * (bidAmount - avg_bidAmount)) / (COUNT(bidAmount) - 1)) as std
+        SQRT(SUM((bidAmount - avg_bid) * (bidAmount - avg_bid)) / (COUNT(bidAmount) - 1)) as std
     FROM 
         (SELECT 
             itemId, 
             bidAmount, 
-            AVG(bidAmount) OVER (PARTITION BY itemId) AS avg_bidAmount 
+            AVG(bidAmount) OVER (PARTITION BY itemId) AS avg_bid 
         FROM 
             bids) subquery
     GROUP BY 
@@ -138,27 +118,187 @@ query = """
     HAVING 
         COUNT(bidAmount) > 1;
     """
+    return query
 
 # SQRT(SUM((bidAmount - avg_bid) * (bidAmount - avg_bid)) / (COUNT(bidAmount) - 1)) as std
 
-df_bids = pd.read_sql_query(query, engine)
+df_bids = pd.read_sql_query(std(), engine)
 
 # Please write a function called bidder_spend_frac that takes no arguments
 # and returns a string containing a SQL query that can be run against the auctions.db database that outputs a table that has four columns:
-
 # bidderName: the name of the bidder
 # total_spend: the amount the bidder spent (that is, the sum of their winning bids)
 # total_bids: the amount the bidder bid, regardless of the outcome. NB: bidders may submit multiple bids for an item – if this is the case only count their highest bid for an item for this calculation.
 # spend_frac: total_spend/total_bids
 
-df_bids = pd.read_sql_query(q, engine)
-df_items = pd.read_sql_query("select * from items", engine)
-df_item_ID = df_bids.isBuyerHighBidder
-freq = df_item_ID.value_counts()
+def bidder_spend_frac() -> str:
+    """
+    Returns a string containing a SQL query that can be run against the auctions.db database 
+    that outputs a table that has four columns:
+    bidderName, total_spend, total_bids, spend_frac: total_spend/total_bids.
+    """
+    query = '''
+    WITH MaxBids AS (
+        SELECT 
+            bidderName, 
+            itemId, 
+            MAX(bidAmount) AS max_bid --Select 
+        FROM 
+            bids
+        GROUP BY 
+            itemId
+    ),
+    TotalSpend AS (
+        SELECT 
+            bidderName, 
+            SUM(max_bid) AS total_spend
+        FROM 
+            MaxBids
+        GROUP BY 
+            bidderName
+    ),
+    BidAmount AS (
+        SELECT 
+            bidderName, 
+            MAX(bidAmount) AS bids_amt
+        FROM 
+            bids
+        GROUP BY 
+            bidderName, itemId  -- Group by itemId to find the maximum bid for each bidder on each item
+    ),
+    TotalBids AS (
+        SELECT
+            bidderName,
+            SUM(bids_amt) AS total_bids
+        FROM
+            BidAmount
+        GROUP BY
+            bidderName
+    )       
+    SELECT 
+        ts.bidderName,
+        ts.total_spend,
+        tb.total_bids,
+        CASE
+            WHEN tb.total_bids > 0 
+            THEN ts.total_spend * 1.0 / tb.total_bids
+            ELSE 0
+        END AS spend_frac
+    FROM 
+        TotalSpend ts
+    JOIN 
+        TotalBids tb ON ts.bidderName = tb.bidderName;
+    '''
+    return query
 
-df_test = pd.read_sql_query('SELECT bidderName, itemId, MAX(itemPrice) AS total_bids FROM bids GROUP BY bidderName', engine)
+# Excersize 3
+# I dont know how to use the SQL in python, but I have abstract ideas about how to doing so.
+# First, I will make a left join from "items" table into the "bids" table,
+# At this time, for each "itemId", there would be a "bidIncrement" value attched to it.
+# Then, we add a new column named "IsBidMin" into the dataframe. Which euqals to 1 when the "BidAmount" equals to "bidIncrement"
+# Such as, if the "bidIncrement" = 1, and BidAmount = 2, the "IsBidMin" would be false, because "Bid"
 
-names = df_bids.bidderName
-print(names.value_counts())
+def min_increment_freq() -> str:
+    """
+    
+    """
+    
+    query = """
+    SELECT 
+        COUNT(*) * 1.0 / (SELECT COUNT(*) FROM bids WHERE itemId IN (SELECT itemId FROM items WHERE isBuyNowUsed = 0)) AS freq
+    FROM 
+        bids b1
+    JOIN 
+        items i ON b1.itemId = i.itemId
+    WHERE 
+        i.isBuyNowUsed = 0
+        AND b1.bidAmount = (
+            SELECT MAX(b2.bidAmount)
+            FROM bids b2
+            WHERE b2.itemId = b1.itemId 
+                AND b2.bidTime < b1.bidTime
+        ) + i.bidIncrement;
+    """
+    return query
 
-pd.read_sql_query()
+# For this sql, we could use the order by timer and by itemId to achieve a similar result. 
+# But after dicussion, we found it will make the code more complicated, so we decided not to use it. 
+
+def win_perc_by_timestamp() -> str:
+    """
+    Docstring
+    """
+
+    query = """
+    WITH AuctionTimes AS (
+        SELECT
+            itemId,
+            MIN(bidTime) AS auctionStartTime,
+            MAX(bidTime) AS auctionEndTime
+        FROM 
+            bids
+        GROUP BY 
+            itemId
+    ),
+    BinnedBids AS (
+        SELECT
+            b.itemId,
+            b.bidderName,
+            b.bidAmount,
+            ((julianday(b.bidTime) - julianday(a.auctionStartTime)) / 
+            (julianday(a.auctionEndTime) - julianday(a.auctionStartTime))) AS normalized_time,
+            CASE
+                WHEN ((julianday(b.bidTime) - julianday(a.auctionStartTime)) / 
+                     (julianday(a.auctionEndTime) - julianday(a.auctionStartTime))) <= 0.1 THEN 1
+                WHEN ((julianday(b.bidTime) - julianday(a.auctionStartTime)) / 
+                     (julianday(a.auctionEndTime) - julianday(a.auctionStartTime))) <= 0.2 THEN 2
+                WHEN ((julianday(b.bidTime) - julianday(a.auctionStartTime)) / 
+                     (julianday(a.auctionEndTime) - julianday(a.auctionStartTime))) <= 0.3 THEN 3
+                WHEN ((julianday(b.bidTime) - julianday(a.auctionStartTime)) / 
+                     (julianday(a.auctionEndTime) - julianday(a.auctionStartTime))) <= 0.4 THEN 4
+                WHEN ((julianday(b.bidTime) - julianday(a.auctionStartTime)) / 
+                     (julianday(a.auctionEndTime) - julianday(a.auctionStartTime))) <= 0.5 THEN 5
+                WHEN ((julianday(b.bidTime) - julianday(a.auctionStartTime)) / 
+                     (julianday(a.auctionEndTime) - julianday(a.auctionStartTime))) <= 0.6 THEN 6
+                WHEN ((julianday(b.bidTime) - julianday(a.auctionStartTime)) / 
+                     (julianday(a.auctionEndTime) - julianday(a.auctionStartTime))) <= 0.7 THEN 7
+                WHEN ((julianday(b.bidTime) - julianday(a.auctionStartTime)) / 
+                     (julianday(a.auctionEndTime) - julianday(a.auctionStartTime))) <= 0.8 THEN 8
+                WHEN ((julianday(b.bidTime) - julianday(a.auctionStartTime)) / 
+                     (julianday(a.auctionEndTime) - julianday(a.auctionStartTime))) <= 0.9 THEN 9
+                ELSE 10
+            END AS timestamp_bin
+        FROM
+            bids b
+        JOIN
+            AuctionTimes a ON b.itemId = a.itemId
+    ),
+    MaxBids AS (
+        SELECT 
+            bidderName, 
+            itemId, 
+            MAX(bidAmount) AS max_bid
+        FROM 
+            bids
+        GROUP BY 
+            itemId
+    ),
+    BinnedWinningBids AS (
+        SELECT
+            b.itemId,
+            b.bidderName,
+            b.timestamp_bin
+        FROM
+            BinnedBids b
+        JOIN
+            MaxBids w ON b.itemId = w.itemId AND b.bidAmount = w.max_bid
+    )
+    SELECT
+        timestamp_bin,
+        COUNT(b.itemId) * 1.0 / (SELECT COUNT(*) FROM BinnedBids WHERE BinnedBids.timestamp_bin = b.timestamp_bin) AS win_perc
+    FROM
+        BinnedWinningBids b
+    GROUP BY
+        timestamp_bin;
+    """
+    return query
